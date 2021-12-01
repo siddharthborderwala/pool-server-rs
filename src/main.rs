@@ -31,9 +31,9 @@ fn handle_connection(mut stream: TcpStream) {
 
 fn main() {
     // get the port
-    let port = std::env::var("PORT").unwrap();
+    let port = std::env::var("PORT").unwrap().parse::<u16>().unwrap();
     // setup the listener
-    let listener = TcpListener::bind(format!("localhost:{}", port)).unwrap();
+    let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
     // announce listening
     println!("🚀 Server listening at {}", listener.local_addr().unwrap());
 

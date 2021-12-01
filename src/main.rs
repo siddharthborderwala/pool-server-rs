@@ -33,9 +33,9 @@ fn main() {
     // get the port
     let port = std::env::var("PORT").unwrap();
     // setup the listener
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
+    let listener = TcpListener::bind(format!("localhost:{}", port)).unwrap();
     // announce listening
-    println!("🚀 Server listening at http://127.0.0.1:{}", port);
+    println!("🚀 Server listening at {}", listener.local_addr().unwrap());
 
     let pool = ThreadPool::new(16);
 

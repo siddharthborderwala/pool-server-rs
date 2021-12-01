@@ -1,1 +1,1 @@
-web: ./target/release/server
+web: PORT=$PORT ./target/release/server

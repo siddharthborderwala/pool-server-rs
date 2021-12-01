@@ -3,12 +3,4 @@ name = "server"
 version = "0.1.0"
 edition = "2018"
 
-# [lib]
-# name = "server_core"
-# path = "src/lib.rs"
-
-# [[bin]]
-# name = "main"
-# path = "src/bin/main.rs"
-
 [dependencies]

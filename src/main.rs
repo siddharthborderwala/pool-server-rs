@@ -31,16 +31,13 @@ fn handle_connection(mut stream: TcpStream) {
 
 fn main() {
     // get the port
-    let port = std::env::args()
-        .nth(1)
-        .or(Some("7878".to_string()))
-        .unwrap();
+    let port = std::env::var("PORT").unwrap();
     // setup the listener
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
     // announce listening
     println!("🚀 Server listening at http://127.0.0.1:{}", port);
 
-    let pool = ThreadPool::new(100);
+    let pool = ThreadPool::new(16);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();

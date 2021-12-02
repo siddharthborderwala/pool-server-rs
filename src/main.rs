@@ -1,6 +1,13 @@
 use std::fs;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc;
+use std::sync::Arc;
+use std::thread;
+
+use signal_hook::consts::signal::{SIGINT, SIGTERM};
+use signal_hook::flag::register;
 
 use server::ThreadPool;
 
@@ -31,16 +38,43 @@ fn handle_connection(mut stream: TcpStream) {
 
 fn main() {
     // get the port
-    let port = std::env::var("PORT").unwrap().parse::<u16>().unwrap();
+    let port = std::env::var("PORT")
+        .expect("PORT env variable not found")
+        .parse::<u16>()
+        .unwrap();
     // setup the listener
-    let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
+    let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).expect("Could not bind");
     // announce listening
     println!("🚀 Server listening at {}", listener.local_addr().unwrap());
 
-    let pool = ThreadPool::new(16);
+    // listen for SIGTERM and SIGINT and gracefully stop application
+    let running = Arc::new(AtomicBool::new(true));
+    register(SIGTERM, Arc::clone(&running)).expect("Failed to register SIGTERM handler");
+    register(SIGINT, Arc::clone(&running)).expect("Failed to register SIGINT handler");
 
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
-        pool.execute(move || handle_connection(stream));
+    let (sender, recver) = mpsc::channel::<bool>();
+
+    thread::spawn(move || {
+        // create a thread pool
+        let pool = Arc::new(ThreadPool::new(8));
+
+        for msg in recver {
+            if !msg {
+                return;
+            } else {
+                for stream in listener.incoming() {
+                    let stream = stream.unwrap();
+                    pool.execute(move || handle_connection(stream));
+                }
+            }
+        }
+    });
+
+    sender.send(true).unwrap();
+
+    loop {
+        if !running.load(Ordering::Relaxed) {
+            sender.send(false).unwrap();
+        }
     }
 }
